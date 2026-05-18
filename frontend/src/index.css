@@ -1,9 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply h-full;
+  }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply h-full bg-[#0d0d0f] text-white antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+  #root {
+    @apply h-full;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #3f3f46 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #3f3f46;
+    border-radius: 9999px;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
   }
 }

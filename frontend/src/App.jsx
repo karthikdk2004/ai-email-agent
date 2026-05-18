@@ -3,6 +3,7 @@ import AgentLogs from "./components/AgentLogs";
 import EmailDetail from "./components/EmailDetail";
 import Inbox from "./components/Inbox";
 import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
 import SentLog from "./components/SentLog";
 
 export default function App() {
@@ -27,21 +28,27 @@ export default function App() {
   const navView = view === "detail" ? "inbox" : view;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar currentView={navView} onViewChange={handleNavChange} />
+    <div className="flex h-full overflow-hidden bg-[#0d0d0f]">
+      {/* Left Sidebar */}
+      <Sidebar currentView={navView} onViewChange={handleNavChange} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {view === "inbox" && <Inbox onSelect={openEmail} />}
-        {view === "detail" && selectedEmail && (
-          <EmailDetail
-            email={selectedEmail}
-            onBack={goBack}
-            onUpdate={(updated) => setSelectedEmail(updated)}
-          />
-        )}
-        {view === "sent" && <SentLog />}
-        {view === "logs" && <AgentLogs />}
-      </main>
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Navbar currentView={navView} onViewChange={handleNavChange} />
+
+        <main className="flex-1 overflow-y-auto p-6">
+          {view === "inbox" && <Inbox onSelect={openEmail} />}
+          {view === "detail" && selectedEmail && (
+            <EmailDetail
+              email={selectedEmail}
+              onBack={goBack}
+              onUpdate={(updated) => setSelectedEmail(updated)}
+            />
+          )}
+          {view === "sent" && <SentLog />}
+          {view === "logs" && <AgentLogs />}
+        </main>
+      </div>
     </div>
   );
 }
