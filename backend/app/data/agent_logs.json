@@ -1,0 +1,51 @@
+[
+  {
+    "email_id": "email_003",
+    "node": "classifier",
+    "decision": "Category: urgent",
+    "reasoning": "The email reports a critical threshold exceeded with a high CPU utilization that may cause service degradation or outage if left unaddressed.",
+    "data": {
+      "category": "urgent"
+    },
+    "timestamp": "2026-05-18T16:52:03.254211"
+  },
+  {
+    "email_id": "email_003",
+    "node": "priority",
+    "decision": "Priority Score: 10/10",
+    "reasoning": "The email indicates a critical threshold has been exceeded with the API Gateway being overloaded for over 15 minutes, posing an immediate risk of service degradation or outage. The situation requires immediate attention to prevent financial or reputational damage, warranting a critical priority score.",
+    "data": {
+      "priority_score": 10,
+      "category": "urgent"
+    },
+    "timestamp": "2026-05-18T16:52:03.776494"
+  },
+  {
+    "email_id": "email_003",
+    "node": "draft",
+    "decision": "Draft generated (567 chars)",
+    "reasoning": "Professional reply for urgent email (priority 10/10)",
+    "data": {
+      "draft_preview": "Hi Datadog Alerts,\nI acknowledge the critical alert regarding the API Gateway's high CPU utilization, which has been over 90% for 18 minutes. I am taking immediate action to address this issue and pre..."
+    },
+    "timestamp": "2026-05-18T16:52:04.732955"
+  },
+  {
+    "email_id": "email_003",
+    "node": "memory",
+    "decision": "Memory updated for alerts@monitoring.datadog.com",
+    "reasoning": "Saved category=urgent, priority=10. Sender total: 1 email(s), avg priority 10.0",
+    "data": {
+      "sender": "alerts@monitoring.datadog.com",
+      "sender_email_count": 1,
+      "sender_avg_priority": 10.0,
+      "global_patterns": {
+        "category_counts": {
+          "urgent": 1
+        },
+        "total_processed": 1
+      }
+    },
+    "timestamp": "2026-05-18T16:52:04.772462"
+  }
+]

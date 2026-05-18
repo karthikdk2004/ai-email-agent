@@ -1,0 +1,13 @@
+[
+  {
+    "email_id": "email_003",
+    "to": "alerts@monitoring.datadog.com",
+    "to_name": "Datadog Alerts",
+    "subject": "Re: [CRITICAL] CPU 98% \u2014 API Gateway Overloaded for 15+ Minutes",
+    "original_subject": "[CRITICAL] CPU 98% \u2014 API Gateway Overloaded for 15+ Minutes",
+    "body": "Hi Datadog Alerts,\nI acknowledge the critical alert regarding the API Gateway's high CPU utilization, which has been over 90% for 18 minutes. I am taking immediate action to address this issue and prevent potential service degradation or outage. I will review the Datadog dashboard for unusual traffic spikes, examine recent deployments, and consider scaling out the nodes as recommended. I expect to have this issue resolved within the next 30 minutes, by which time I will provide an update on the actions taken and the resulting status. \n\nBest regards,\n[Your Name]",
+    "sent_at": "2026-05-18T16:52:48.673453",
+    "category": "urgent",
+    "priority_score": 10
+  }
+]

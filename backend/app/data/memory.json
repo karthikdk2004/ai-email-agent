@@ -1,0 +1,19 @@
+{
+  "senders": {
+    "alerts@monitoring.datadog.com": {
+      "name": "Datadog Alerts",
+      "email_count": 1,
+      "categories": {
+        "urgent": 1
+      },
+      "avg_priority": 10.0,
+      "last_seen": "2026-05-18T16:52:04.740617"
+    }
+  },
+  "patterns": {
+    "category_counts": {
+      "urgent": 1
+    },
+    "total_processed": 1
+  }
+}
