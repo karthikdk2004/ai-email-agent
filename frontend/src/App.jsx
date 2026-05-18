@@ -1,8 +1,11 @@
 import { useState } from "react";
+import AgentConfig from "./components/AgentConfig";
 import AgentLogs from "./components/AgentLogs";
 import EmailDetail from "./components/EmailDetail";
 import Inbox from "./components/Inbox";
+import KnowledgeBase from "./components/KnowledgeBase";
 import Navbar from "./components/Navbar";
+import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import SentLog from "./components/SentLog";
 
@@ -47,6 +50,9 @@ export default function App() {
           )}
           {view === "sent" && <SentLog />}
           {view === "logs" && <AgentLogs />}
+          {view === "agent-config" && <AgentConfig />}
+          {view === "knowledge-base" && <KnowledgeBase />}
+          {view === "settings" && <Settings />}
         </main>
       </div>
     </div>
