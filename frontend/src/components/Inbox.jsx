@@ -5,35 +5,57 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const CAT = {
   urgent: {
     badge: "bg-red-500/10 text-red-400 border border-red-500/20",
-    avatar: "bg-red-500/15 text-red-400",
     dot: "●",
     label: "URGENT",
+    borderColor: "#ef4444",
   },
   "follow-up": {
     badge: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-    avatar: "bg-amber-500/15 text-amber-400",
     dot: "●",
     label: "FOLLOW UP",
+    borderColor: "#f59e0b",
   },
   "action-required": {
     badge: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-    avatar: "bg-blue-500/15 text-blue-400",
     dot: "●",
     label: "ACTION",
+    borderColor: "#3b82f6",
   },
   newsletter: {
     badge: "bg-zinc-700/50 text-zinc-400 border border-zinc-700",
-    avatar: "bg-zinc-700 text-zinc-400",
     dot: "●",
     label: "NEWS",
+    borderColor: "#71717a",
   },
   unprocessed: {
-    badge: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
-    avatar: "bg-indigo-500/15 text-indigo-400",
-    dot: "●",
-    label: "NEW",
+    badge: "bg-transparent text-zinc-500 border border-zinc-700",
+    dot: "",
+    label: "UNPROCESSED",
+    borderColor: "#6366f1",
   },
 };
+
+const AVATAR_PALETTE = [
+  "bg-red-500/20 text-red-400",
+  "bg-orange-500/20 text-orange-400",
+  "bg-amber-500/20 text-amber-400",
+  "bg-green-500/20 text-green-400",
+  "bg-teal-500/20 text-teal-400",
+  "bg-cyan-500/20 text-cyan-400",
+  "bg-blue-500/20 text-blue-400",
+  "bg-indigo-500/20 text-indigo-400",
+  "bg-violet-500/20 text-violet-400",
+  "bg-purple-500/20 text-purple-400",
+  "bg-pink-500/20 text-pink-400",
+  "bg-rose-500/20 text-rose-400",
+];
+
+function avatarColor(name) {
+  if (!name) return AVATAR_PALETTE[7];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+}
 
 const PRIORITY_COLOR = (s) => {
   if (!s) return null;
@@ -214,13 +236,14 @@ export default function Inbox({ onSelect }) {
               <div
                 key={email.id}
                 onClick={() => onSelect(email)}
+                style={{ borderLeft: `4px solid ${cfg.borderColor}` }}
                 className={`group flex items-center gap-4 px-4 py-3.5 bg-[#16161a] border border-zinc-800 rounded-xl cursor-pointer hover:border-zinc-600 hover:bg-[#1c1c21] transition-all ${
                   email.status === "sent" || email.status === "rejected" ? "opacity-50" : ""
                 }`}
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${cfg.avatar}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${avatarColor(email.from_name)}`}>
                     {initials}
                   </div>
                   {isUnread && (
@@ -251,8 +274,8 @@ export default function Inbox({ onSelect }) {
                       P{email.priority_score}
                     </span>
                   )}
-                  <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${cfg.badge}`}>
-                    <span className="mr-1 text-[10px]">{cfg.dot}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.badge}`}>
+                    {cfg.dot && <span className="mr-1 text-[10px]">{cfg.dot}</span>}
                     {cfg.label}
                   </span>
                   {email.status && !["unprocessed", null].includes(email.status) && STATUS_COLOR[email.status] && (

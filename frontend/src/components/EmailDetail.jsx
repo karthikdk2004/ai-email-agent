@@ -9,6 +9,13 @@ const CAT_STYLE = {
   newsletter: { badge: "bg-zinc-700/50 text-zinc-400 border border-zinc-700", label: "Newsletter" },
 };
 
+const BANNER_GRADIENT = {
+  urgent: "from-red-500/50",
+  "follow-up": "from-amber-500/50",
+  "action-required": "from-blue-500/50",
+  newsletter: "from-zinc-500/40",
+};
+
 function priorityTextColor(s) {
   if (!s) return "text-zinc-600";
   if (s >= 9) return "text-red-400";
@@ -50,6 +57,34 @@ function PriorityBar({ score }) {
         className={`h-1.5 rounded-full transition-all ${priorityBarColor(score)}`}
         style={{ width: `${((score || 0) / 10) * 100}%` }}
       />
+    </div>
+  );
+}
+
+function renderBody(body) {
+  if (!body) return null;
+  const lines = body.split("\n");
+  const isKv = (l) => /^[A-Za-z][A-Za-z0-9 _-]{0,30}:\s+\S/.test(l.trim());
+  if (lines.filter(isKv).length < 2) {
+    return (
+      <pre className="whitespace-pre-wrap text-sm text-zinc-300 font-sans leading-relaxed">{body}</pre>
+    );
+  }
+  return (
+    <div className="text-sm leading-relaxed space-y-px">
+      {lines.map((line, i) => {
+        const m = line.match(/^([A-Za-z][A-Za-z0-9 _-]{0,30}):\s+(.+)$/);
+        if (m) {
+          return (
+            <div key={i} className="grid grid-cols-[140px_1fr] gap-2 py-1 border-b border-zinc-800/50 last:border-0">
+              <span className="text-zinc-500 font-mono text-xs truncate pt-0.5">{m[1]}</span>
+              <span className="text-zinc-200 text-xs">{m[2]}</span>
+            </div>
+          );
+        }
+        if (!line.trim()) return <div key={i} className="h-2" />;
+        return <p key={i} className="text-zinc-300 py-0.5">{line}</p>;
+      })}
     </div>
   );
 }
@@ -139,6 +174,10 @@ export default function EmailDetail({ email: init, onBack, onUpdate }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* ── Left: Email Content ── */}
         <div className="bg-[#16161a] border border-zinc-800 rounded-2xl flex flex-col overflow-hidden">
+          {/* Category color strip */}
+          {email.category && (
+            <div className={`h-0.5 w-full bg-gradient-to-r ${BANNER_GRADIENT[email.category] || "from-indigo-500/50"} to-transparent`} />
+          )}
           {/* Card header */}
           <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-zinc-800">
             <div className="flex-1 min-w-0 pr-3">
@@ -165,9 +204,7 @@ export default function EmailDetail({ email: init, onBack, onUpdate }) {
 
           {/* Body */}
           <div className="flex-1 overflow-auto px-5 py-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-300 font-sans leading-relaxed">
-              {email.body}
-            </pre>
+            {renderBody(email.body)}
           </div>
         </div>
 
@@ -182,23 +219,43 @@ export default function EmailDetail({ email: init, onBack, onUpdate }) {
                 </svg>
               </div>
               <h3 className="font-bold text-white text-lg mb-1.5">AI Analysis</h3>
-              <p className="text-zinc-500 text-sm mb-6">
+              <p className="text-zinc-500 text-sm mb-6 max-w-xs mx-auto">
                 Run the 4-node LangGraph workflow to classify, score priority, and draft a reply.
               </p>
-              <button
-                onClick={processEmail}
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-900/30 text-sm"
-              >
-                Process with AI
-              </button>
-              <div className="flex items-center justify-center gap-1.5 mt-4">
-                {["classifier", "priority", "draft", "memory"].map((n, i) => (
-                  <span key={n} className="flex items-center gap-1.5">
-                    <span className="text-zinc-600 text-xs font-mono">{n}</span>
-                    {i < 3 && <span className="text-zinc-700 text-xs">→</span>}
+
+              {/* Pipeline visual */}
+              <div className="flex items-center justify-center gap-1 mb-7 flex-wrap">
+                {[
+                  { label: "classifier", icon: "🔍" },
+                  { label: "priority",   icon: "⚡" },
+                  { label: "draft",      icon: "✍️" },
+                  { label: "memory",     icon: "🧠" },
+                ].map(({ label, icon }, i) => (
+                  <span key={label} className="flex items-center gap-1">
+                    <div className="bg-zinc-900 border border-zinc-700/80 rounded-lg px-3 py-2 flex flex-col items-center gap-1 min-w-[62px]">
+                      <span className="text-base leading-none">{icon}</span>
+                      <span className="text-zinc-500 text-[9px] font-mono tracking-wide">{label}</span>
+                    </div>
+                    {i < 3 && (
+                      <span className="text-indigo-500 text-sm font-bold px-0.5">→</span>
+                    )}
                   </span>
                 ))}
               </div>
+
+              <button
+                onClick={processEmail}
+                className="group relative px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-900/30 hover:shadow-[0_0_24px_rgba(99,102,241,0.45)] text-sm flex items-center gap-2 mx-auto"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4 transition-transform group-hover:scale-125 group-hover:-rotate-12"
+                >
+                  <path d="M13 2L4.09 12.97H11L10 22l8.91-10.97H13L14 2z" />
+                </svg>
+                Process with AI
+              </button>
             </div>
           )}
 

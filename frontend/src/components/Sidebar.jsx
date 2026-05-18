@@ -66,7 +66,21 @@ export default function Sidebar({ currentView, onViewChange }) {
     ITEMS.find((i) => ACTIVE_VIEWS[i.id] === currentView)?.id || "overview";
 
   return (
-    <aside className="w-60 flex-shrink-0 bg-[#111113] border-r border-zinc-800 flex flex-col h-full">
+    <>
+      <style>{`
+        @keyframes sidebarGlow {
+          0%,100% { opacity: .03; }
+          50%      { opacity: .08; }
+        }
+      `}</style>
+    <aside className="w-60 flex-shrink-0 bg-[#111113] border-r border-zinc-800 flex flex-col h-full relative overflow-hidden">
+      <div
+        style={{
+          background: "linear-gradient(135deg, rgba(99,102,241,1) 0%, transparent 65%)",
+          animation: "sidebarGlow 8s ease-in-out infinite",
+        }}
+        className="absolute inset-0 pointer-events-none"
+      />
       {/* Logo */}
       <div className="px-5 py-5 border-b border-zinc-800">
         <div className="flex items-center gap-3">
@@ -105,17 +119,18 @@ export default function Sidebar({ currentView, onViewChange }) {
         })}
       </nav>
 
-      {/* Deploy button */}
+      {/* Version badge */}
       <div className="px-3 pb-5">
         <div className="border-t border-zinc-800 pt-4">
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-indigo-900/30">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.82m2.56-5.84a14.98 14.98 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-            </svg>
-            Deploy Agent
-          </button>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-zinc-600 text-xs font-mono">runtime</span>
+            <span className="px-2.5 py-1 bg-zinc-900 border border-zinc-700/80 rounded-full text-[10px] text-zinc-400 font-mono font-semibold tracking-wide">
+              Agent v1.0
+            </span>
+          </div>
         </div>
       </div>
     </aside>
+    </>
   );
 }
