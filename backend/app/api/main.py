@@ -17,12 +17,6 @@ from app.agent.mock_data import get_mock_emails
 
 load_dotenv()
 
-# ── CORS (FIX 16) ─────────────────────────────────────────────────────────────
-allowed_origins = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000",
-).split(",")
-
 # ── Rate limiting (FIX 12) ────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address)
 
@@ -32,8 +26,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
