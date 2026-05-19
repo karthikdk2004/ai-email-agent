@@ -36,19 +36,27 @@ const FILTERS = ["all", "classifier", "priority", "draft", "memory"];
 
 export default function AgentLogs() {
   const [logs, setLogs] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState(new Set());
   const [error, setError] = useState(null);
 
-  const fetch_ = async () => {
+  const loadAgentLogs = async () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch(`${API_URL}/logs`);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const d = await r.json();
-      setLogs([...(d.logs || [])].reverse());
+      const [logsRes, statsRes] = await Promise.all([
+        fetch(`${API_URL}/logs`),
+        fetch(`${API_URL}/stats`),
+      ]);
+      if (!logsRes.ok) throw new Error(`HTTP ${logsRes.status}`);
+      const logsData = await logsRes.json();
+      setLogs([...(logsData.logs || [])].reverse());
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -56,7 +64,7 @@ export default function AgentLogs() {
     }
   };
 
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => { loadAgentLogs(); }, []);
 
   const toggle = (i) => {
     const next = new Set(expanded);
@@ -75,6 +83,11 @@ export default function AgentLogs() {
   const uniqueEmails = new Set(logs.map((l) => l.email_id)).size;
   const memoryCount = logs.filter((l) => l.node === "memory").length;
 
+  // Real decision accuracy from stats (FIX 1)
+  const decisionAccuracy = stats?.processed > 0
+    ? `${stats.approval_rate}%`
+    : "—";
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -86,7 +99,7 @@ export default function AgentLogs() {
           </p>
         </div>
         <button
-          onClick={fetch_}
+          onClick={loadAgentLogs}
           className="p-2 bg-[#16161a] border border-zinc-800 rounded-lg text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -98,7 +111,6 @@ export default function AgentLogs() {
       {/* Filter pills */}
       <div className="flex flex-wrap gap-2 mb-5">
         {FILTERS.map((f) => {
-          const ns = NODE[f];
           return (
             <button
               key={f}
@@ -212,10 +224,10 @@ export default function AgentLogs() {
             })}
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Stats row — responsive (FIX 11) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: "Decision Accuracy", value: "98.4%", sub: "Based on approved drafts" },
+              { label: "Approval Rate", value: decisionAccuracy, sub: "Sent vs total processed" },
               { label: "Emails Processed", value: String(uniqueEmails), sub: "Unique email threads" },
               { label: "Memory Nodes", value: String(memoryCount), sub: "Sender patterns saved" },
             ].map((s) => (

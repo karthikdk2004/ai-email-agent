@@ -91,7 +91,7 @@ export default function Inbox({ onSelect }) {
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
 
-  const fetch_ = async () => {
+  const loadEmails = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -106,7 +106,7 @@ export default function Inbox({ onSelect }) {
     }
   };
 
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => { loadEmails(); }, []);
 
   const counts = FILTERS.reduce((acc, f) => {
     acc[f] =
@@ -165,7 +165,7 @@ export default function Inbox({ onSelect }) {
             />
           </div>
           <button
-            onClick={fetch_}
+            onClick={loadEmails}
             className="p-2 bg-[#16161a] border border-zinc-800 rounded-lg text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
             title="Refresh"
           >

@@ -1,11 +1,21 @@
 const ITEMS = [
   {
-    id: "overview",
-    label: "Overview",
+    id: "inbox",
+    label: "Inbox",
     view: "inbox",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-        <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+        <path d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z" />
+      </svg>
+    ),
+  },
+  {
+    id: "sent",
+    label: "Sent Log",
+    view: "sent",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+        <path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
       </svg>
     ),
   },
@@ -31,8 +41,8 @@ const ITEMS = [
     ),
   },
   {
-    id: "audit-trail",
-    label: "Audit Trail",
+    id: "logs",
+    label: "Agent Logs",
     view: "logs",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -53,17 +63,7 @@ const ITEMS = [
   },
 ];
 
-const VIEW_TO_ITEM = {
-  inbox: "overview",
-  logs: "audit-trail",
-  "agent-config": "agent-config",
-  "knowledge-base": "knowledge-base",
-  settings: "settings",
-};
-
-export default function Sidebar({ currentView, onViewChange }) {
-  const activeItem = VIEW_TO_ITEM[currentView] || "overview";
-
+export default function Sidebar({ currentView, onViewChange, isOpen, onClose }) {
   return (
     <>
       <style>{`
@@ -72,64 +72,83 @@ export default function Sidebar({ currentView, onViewChange }) {
           50%      { opacity: .08; }
         }
       `}</style>
-    <aside className="w-60 flex-shrink-0 bg-[#111113] border-r border-zinc-800 flex flex-col h-full relative overflow-hidden">
-      <div
-        style={{
-          background: "linear-gradient(135deg, rgba(99,102,241,1) 0%, transparent 65%)",
-          animation: "sidebarGlow 8s ease-in-out infinite",
-        }}
-        className="absolute inset-0 pointer-events-none"
-      />
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-900/40">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm leading-tight">AI Core</p>
-            <p className="text-indigo-400 text-[10px] font-semibold tracking-widest uppercase">
-              Active Instance
-            </p>
+
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
+          w-60 flex-shrink-0 bg-[#111113] border-r border-zinc-800
+          flex flex-col h-full relative overflow-hidden
+          transform transition-transform duration-200 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+        `}
+      >
+        <div
+          style={{
+            background: "linear-gradient(135deg, rgba(99,102,241,1) 0%, transparent 65%)",
+            animation: "sidebarGlow 8s ease-in-out infinite",
+          }}
+          className="absolute inset-0 pointer-events-none"
+        />
+
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-900/40">
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm leading-tight">AI Core</p>
+              <p className="text-indigo-400 text-[10px] font-semibold tracking-widest uppercase">
+                Active Instance
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Nav Items */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {ITEMS.map((item) => {
-          const isActive = item.id === activeItem;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.view)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20"
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
-              }`}
-            >
-              <span className={isActive ? "text-indigo-400" : ""}>{item.icon}</span>
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+        {/* Nav Items */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          {ITEMS.map((item) => {
+            const isActive = item.view === currentView;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { onViewChange(item.view); onClose?.(); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+                }`}
+              >
+                <span className={isActive ? "text-indigo-400" : ""}>{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
 
-      {/* Version badge */}
-      <div className="px-3 pb-5">
-        <div className="border-t border-zinc-800 pt-4">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-zinc-600 text-xs font-mono">runtime</span>
-            <span className="px-2.5 py-1 bg-zinc-900 border border-zinc-700/80 rounded-full text-[10px] text-zinc-400 font-mono font-semibold tracking-wide">
-              Agent v1.0
-            </span>
+        {/* Version badge */}
+        <div className="px-3 pb-5">
+          <div className="border-t border-zinc-800 pt-4">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-zinc-600 text-xs font-mono">runtime</span>
+              <span className="px-2.5 py-1 bg-zinc-900 border border-zinc-700/80 rounded-full text-[10px] text-zinc-400 font-mono font-semibold tracking-wide">
+                Agent v1.0
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 }

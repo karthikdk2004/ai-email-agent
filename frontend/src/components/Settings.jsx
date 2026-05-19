@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const STORAGE_KEY = "emailAgentSettings";
+const DEFAULTS = { autoProcess: false, emailNotifications: true };
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -11,9 +16,7 @@ function Toggle({ checked, onChange, disabled }) {
       className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors duration-200 focus:outline-none ${
         disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
       } ${
-        checked
-          ? "bg-indigo-600 border-indigo-600"
-          : "bg-zinc-700 border-zinc-700"
+        checked ? "bg-indigo-600 border-indigo-600" : "bg-zinc-700 border-zinc-700"
       }`}
     >
       <span
@@ -26,8 +29,46 @@ function Toggle({ checked, onChange, disabled }) {
 }
 
 export default function Settings() {
-  const [autoProcess, setAutoProcess] = useState(false);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [autoProcess, setAutoProcess] = useState(DEFAULTS.autoProcess);
+  const [emailNotifications, setEmailNotifications] = useState(DEFAULTS.emailNotifications);
+  const [apiKeySet, setApiKeySet] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setAutoProcess(parsed.autoProcess ?? DEFAULTS.autoProcess);
+        setEmailNotifications(parsed.emailNotifications ?? DEFAULTS.emailNotifications);
+      } catch (_) {}
+    }
+
+    fetch(`${API_URL}/health`)
+      .then((r) => r.json())
+      .then((d) => setApiKeySet(d.api_key_set))
+      .catch(() => setApiKeySet(false));
+  }, []);
+
+  const handleAutoProcess = (val) => {
+    setAutoProcess(val);
+    persist(val, emailNotifications);
+  };
+
+  const handleEmailNotifications = (val) => {
+    setEmailNotifications(val);
+    persist(autoProcess, val);
+  };
+
+  const persist = (ap, en) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ autoProcess: ap, emailNotifications: en }));
+  };
+
+  const handleSave = () => {
+    persist(autoProcess, emailNotifications);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -35,6 +76,16 @@ export default function Settings() {
         <h1 className="text-white text-xl font-bold">Settings</h1>
         <p className="text-zinc-500 text-sm mt-1">Agent behavior and integration settings.</p>
       </div>
+
+      {/* Success toast */}
+      {saveSuccess && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-green-400 flex-shrink-0">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-green-400 text-sm font-medium">Settings saved successfully</span>
+        </div>
+      )}
 
       {/* Behavior toggles */}
       <div className="bg-[#111113] border border-zinc-800 rounded-xl overflow-hidden mb-4">
@@ -49,10 +100,10 @@ export default function Settings() {
               <p className="text-zinc-200 text-sm font-medium">Auto-process emails</p>
               <p className="text-zinc-600 text-xs mt-0.5">Automatically run the agent pipeline on new emails</p>
             </div>
-            <Toggle checked={autoProcess} onChange={setAutoProcess} />
+            <Toggle checked={autoProcess} onChange={handleAutoProcess} />
           </div>
 
-          {/* Send without approval */}
+          {/* Send without approval — locked for safety */}
           <div className="px-6 py-4 flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -78,7 +129,7 @@ export default function Settings() {
               <p className="text-zinc-200 text-sm font-medium">Email notifications</p>
               <p className="text-zinc-600 text-xs mt-0.5">Receive a summary email when the agent processes a batch</p>
             </div>
-            <Toggle checked={emailNotifications} onChange={setEmailNotifications} />
+            <Toggle checked={emailNotifications} onChange={handleEmailNotifications} />
           </div>
         </div>
       </div>
@@ -98,16 +149,31 @@ export default function Settings() {
             <span className="font-mono text-sm text-zinc-500 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg tracking-wider select-none">
               sk-**********************
             </span>
-            <span className="flex items-center gap-1 text-emerald-400 text-[11px] font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-              Set
-            </span>
+            {apiKeySet === null ? (
+              <span className="flex items-center gap-1 text-zinc-500 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 inline-block animate-pulse" />
+                Checking…
+              </span>
+            ) : apiKeySet ? (
+              <span className="flex items-center gap-1 text-emerald-400 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                Set
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-red-400 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+                Not set
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       <div className="flex justify-end">
-        <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-indigo-900/30">
+        <button
+          onClick={handleSave}
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-indigo-900/30"
+        >
           Save Settings
         </button>
       </div>

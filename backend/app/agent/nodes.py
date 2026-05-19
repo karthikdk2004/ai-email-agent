@@ -12,15 +12,21 @@ from .memory import add_agent_log, get_memory, update_memory
 load_dotenv()
 
 
+_llm_instance = None
+
+
 def _llm() -> ChatGroq:
-    api_key = os.getenv("GROQ_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("GROQ_API_KEY is not set. Add it to backend/.env")
-    return ChatGroq(
-        api_key=api_key,
-        model_name="llama-3.3-70b-versatile",
-        temperature=0.2,
-    )
+    global _llm_instance
+    if _llm_instance is None:
+        api_key = os.getenv("GROQ_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("GROQ_API_KEY is not set. Add it to backend/.env")
+        _llm_instance = ChatGroq(
+            api_key=api_key,
+            model_name="llama-3.3-70b-versatile",
+            temperature=0.2,
+        )
+    return _llm_instance
 
 
 def _parse_json(text: str) -> dict:

@@ -8,20 +8,22 @@ A production-grade AI Email Agent built with **LangGraph**, **FastAPI**, **Groq 
 
 ```
   React Frontend (Vite · Tailwind)
-  ┌───────────────────────────────────────┐
-  │  Inbox   │ Email Detail │ Sent │ Logs │
-  └──────────────────┬────────────────────┘
-                     │  REST API (JSON)
-                     ▼
+  ┌─────────────────────────────────────────────────┐
+  │  Inbox  │ Sent Log │ Agent Logs │ Config │ ...  │
+  └─────────────────────┬───────────────────────────┘
+                        │  REST API (JSON)
+                        ▼
   FastAPI Backend (Python · Uvicorn)
-  ┌───────────────────────────────────────┐
-  │  GET /emails       POST /process/:id  │
-  │  POST /approve/:id POST /reject/:id   │
-  │  POST /edit/:id    GET /logs          │
-  │  GET /sent                            │
-  └──────────────────┬────────────────────┘
-                     │
-                     ▼
+  ┌─────────────────────────────────────────────────┐
+  │  GET  /emails          POST /process/:id        │
+  │  POST /approve/:id     POST /reject/:id         │
+  │  POST /edit/:id        GET  /logs               │
+  │  GET  /sent            GET  /stats              │
+  │  GET  /health          GET  /config             │
+  │  POST /config                                   │
+  └─────────────────────┬───────────────────────────┘
+                        │
+                        ▼
   LangGraph Workflow (StateGraph)
   ┌────────────┐   ┌────────────┐
   │ classifier │──►│  priority  │
@@ -36,10 +38,12 @@ A production-grade AI Email Agent built with **LangGraph**, **FastAPI**, **Groq 
                          ▼
                    Groq API (LLaMA 3.3-70B-Versatile)
 
-  JSON data store (flat files)
-  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-  │  memory.json │  │sent_log.json │  │agent_logs.json│
-  └──────────────┘  └──────────────┘  └──────────────┘
+  JSON data store (flat files · backend/app/data/)
+  ┌──────────────────┐  ┌──────────────────┐
+  │  memory.json     │  │  sent_log.json   │
+  │  agent_logs.json │  │  emails_state.json│
+  │  config.json     │  └──────────────────┘
+  └──────────────────┘
 ```
 
 ---
@@ -124,13 +128,36 @@ npm run dev
 
 ## How to Use
 
-1. **Inbox** — 15 pre-loaded realistic emails with color-coded category badges
+1. **Inbox** — 15 pre-loaded realistic emails (state persists across restarts)
 2. **Click an email** → Email Detail view
 3. **"Process with AI"** — runs the 4-node LangGraph workflow via Groq
 4. AI panel shows: **Category**, **Priority Score (1–10)**, **Draft Reply**
 5. Choose **Approve & Send**, **Edit** (modify the draft), or **Reject**
-6. **Sent Log** tab — table of all approved replies
-7. **Agent Logs** tab — full JSON audit trail per node, filterable by node type
+6. **Sent Log** — table of all approved replies with real success-rate stats
+7. **Agent Logs** — full JSON audit trail per node, filterable by node type
+8. **Agent Config** — editable model parameters, saved to localStorage + backend
+9. **Knowledge Base** — document list with upload and remove support
+10. **Settings** — persistent toggles, real API key status check
+
+---
+
+## API Endpoints
+
+| Method | Path | Description | Rate Limit |
+|--------|------|-------------|------------|
+| GET | `/` | API root / ping | — |
+| GET | `/health` | Health check + API key status | — |
+| GET | `/stats` | Aggregate stats (sent, rejected, approval rate) | — |
+| GET | `/emails` | List all emails | — |
+| GET | `/emails/:id` | Get single email | — |
+| POST | `/process/:id` | Run LangGraph pipeline on email | 10/min |
+| POST | `/approve/:id` | Approve draft and add to sent log | 30/min |
+| POST | `/reject/:id` | Reject email | 30/min |
+| POST | `/edit/:id` | Edit draft reply | 30/min |
+| GET | `/logs` | Agent decision audit logs | — |
+| GET | `/sent` | Sent email log | — |
+| GET | `/config` | Get model configuration | — |
+| POST | `/config` | Save model configuration | — |
 
 ---
 
@@ -149,17 +176,34 @@ npm run dev
 
 ```
 EmailState
-  email_id        : str
-  email           : dict   (full email object)
-  category        : str    (output of classifier_node)
-  priority_score  : int    (output of priority_node, 1–10)
-  priority_reasoning: str
-  draft_reply     : str    (output of draft_node)
+  email_id           : str
+  email              : dict   (full email object)
+  category           : str    (output of classifier_node)
+  priority_score     : int    (output of priority_node, 1–10)
+  priority_reasoning : str
+  draft_reply        : str    (output of draft_node)
   processing_complete: bool
-  logs            : list   (accumulated per-node logs)
+  logs               : list   (accumulated per-node logs)
 ```
 
 Each node calls Groq, parses the response, writes to `agent_logs.json`, and returns updated state fields.
+
+---
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GROQ_API_KEY` | *(required)* | Groq API key from console.groq.com |
+| `ALLOWED_ORIGINS` | `http://localhost:5173,...` | Comma-separated CORS allowed origins |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
 
 ---
 
@@ -170,7 +214,7 @@ Each node calls Groq, parses the response, writes to `agent_logs.json`, and retu
 1. Push this repo to GitHub
 2. Create a new Railway project → **"Deploy from GitHub repo"**
 3. Set the **Root Directory** to `backend/`
-4. Add environment variable: `GROQ_API_KEY=your_key`
+4. Add environment variables: `GROQ_API_KEY=your_key` and `ALLOWED_ORIGINS=https://your-frontend.vercel.app`
 5. Railway will auto-detect the `Procfile` and deploy
 
 ### Frontend → Vercel
@@ -189,19 +233,21 @@ email-agent/
 ├── backend/
 │   ├── app/
 │   │   ├── agent/
-│   │   │   ├── graph.py       # LangGraph StateGraph definition
-│   │   │   ├── nodes.py       # 4 LangGraph nodes (Groq calls)
-│   │   │   ├── memory.py      # JSON file helpers
-│   │   │   └── mock_data.py   # 15 realistic seed emails
+│   │   │   ├── graph.py          # LangGraph StateGraph definition
+│   │   │   ├── nodes.py          # 4 LangGraph nodes (Groq calls, singleton LLM)
+│   │   │   ├── memory.py         # JSON file helpers
+│   │   │   └── mock_data.py      # 15 realistic seed emails
 │   │   ├── api/
-│   │   │   └── main.py        # FastAPI app + all endpoints
+│   │   │   └── main.py           # FastAPI app + all endpoints + rate limiting
 │   │   └── data/
-│   │       ├── memory.json    # Sender pattern memory
-│   │       ├── sent_log.json  # Approved reply log
-│   │       └── agent_logs.json# Node decision audit trail
+│   │       ├── memory.json       # Sender pattern memory
+│   │       ├── sent_log.json     # Approved reply log
+│   │       ├── agent_logs.json   # Node decision audit trail
+│   │       ├── emails_state.json # Persisted email store
+│   │       └── config.json       # Agent model config
 │   ├── requirements.txt
 │   ├── .env.example
-│   └── Procfile               # Railway deploy command
+│   └── Procfile                  # Railway deploy command
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -209,7 +255,12 @@ email-agent/
 │   │   │   ├── EmailDetail.jsx
 │   │   │   ├── SentLog.jsx
 │   │   │   ├── AgentLogs.jsx
-│   │   │   └── Navbar.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── AgentConfig.jsx
+│   │   │   ├── KnowledgeBase.jsx
+│   │   │   ├── Settings.jsx
+│   │   │   └── ErrorBoundary.jsx
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   └── index.css
@@ -218,7 +269,7 @@ email-agent/
 │   ├── tailwind.config.js
 │   ├── postcss.config.js
 │   └── .env.example
-├── start.bat                  # One-click local launcher (Windows)
+├── start.bat                     # One-click local launcher (Windows)
 └── README.md
 ```
 
@@ -231,8 +282,9 @@ email-agent/
 | AI Orchestration | LangGraph (StateGraph) |
 | LLM | Groq — LLaMA 3.3-70B-Versatile |
 | Backend | FastAPI + Uvicorn |
+| Rate Limiting | slowapi |
 | Frontend | React 18 + Vite 5 |
 | Styling | Tailwind CSS 3 |
-| Data | JSON flat-files |
+| Data | JSON flat-files (persisted across restarts) |
 | Backend deploy | Railway (Procfile) |
 | Frontend deploy | Vercel |
